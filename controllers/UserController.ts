@@ -2,7 +2,7 @@ import { Request,Response,NextFunction } from "express";
 import { CreateUserInput,EditUserInput } from "../dto";
 import { User } from "../models";
 import { Error as MongooseError } from 'mongoose';
-import { handleUserExistsError, handleUserNotFoundError, handleInvalidFieldsError } from '../middleware/errorhandler';
+import { handleUserExistsError, handleUserNotFoundError, handleInvalidFieldsError ,handleUserDataNotExistsError, handleServerError} from '../middleware/errorhandler';
 import logger from '../service/logger';
 
 
@@ -93,13 +93,17 @@ export const GetUserById = async (req: Request, res: Response, next: NextFunctio
         if (Getuser !== null) {
             return res.json({ success: true, data: Getuser });
         }
-        return res.json({ success: false, message: "User data not available" });
+        const result =handleUserDataNotExistsError(req, res, next);
+        logger.error("Error Msg");
+        return result;
+        // return res.json({ success: false, message: "User data not available" });
     } catch (error: any) {
         console.error("Error fetching user by ID:", error);
         
         let statusCode = 500;
         let errorCode = "UNKNOWN_ERROR";
         let errorMessage = "An unexpected error occurred.";
+      
 
         // Customize error handling based on the function name
         if (error instanceof MongooseError.ValidationError) {
@@ -112,6 +116,12 @@ export const GetUserById = async (req: Request, res: Response, next: NextFunctio
             statusCode = 400;
             errorCode = "CAST_ERROR";
             errorMessage = "Invalid data type. Please provide valid input data.";
+        }
+        else
+        {
+  
+            const result = handleServerError(error, req, res, () => {});
+            return result;
         }
 
         return res.status(statusCode).json({ success: false, error: errorCode, message: errorMessage });
@@ -152,20 +162,32 @@ export const UpdateUserById = async (req: Request, res: Response, next: NextFunc
         return res.status(200).json({ success: true, message: "User updated successfully!", data: updatedUser });
     } catch (error:any) {
         logger.error(error.message); // Log the error using the logger
-        next(error); // Pass the error to the next middleware
+
+        // Pass the error to your error handling middleware
+        const result = handleServerError(error, req, res, () => {});
+        return result;
+
     }
 }
 
 
 export const DeleteUserById = async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
+    const data = req.body;
     try {
         const deletedUser = await User.findByIdAndDelete(id);
+        if(data)
+        {
+            const result = handleInvalidFieldsError(req,res,next,data);
+            return result;
+        }
 
         if (!deletedUser) {
-            return res.status(404).json({ success: false, message: "User not found" });
+            const result = handleUserNotFoundError(req,res,next);
+            return result;
         }
         return res.status(200).json({ success: true, message: "User deleted successfully" });
+
     } catch (error: any) {
         console.error("Error deleting user:", error);
 
@@ -192,3 +214,5 @@ export const DeleteUserById = async (req: Request, res: Response, next: NextFunc
         return res.status(statusCode).json({ success: false, error: errorCode, message: errorMessage });
     }
 }
+
+

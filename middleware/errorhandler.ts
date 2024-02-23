@@ -22,6 +22,10 @@ export const handleUserExistsError = (req: Request, res: Response, next: NextFun
     res.status(400).json({ success: false, message: 'User already exists!' });
 };
 
+export const handleUserDataNotExistsError = (req: Request, res: Response, next: NextFunction) => {
+    res.status(404).json({ success: false, message: 'User data not available!' });
+};
+
 export const handleUserNotFoundError = (req: Request, res: Response, next: NextFunction) => {
     res.status(404).json({ success: false, message: 'User ID not found!' });
 };

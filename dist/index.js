@@ -12,6 +12,7 @@ const errorhandler_1 = require("./middleware/errorhandler");
 const cluster_1 = __importDefault(require("cluster"));
 const os_1 = __importDefault(require("os"));
 const http_proxy_1 = __importDefault(require("http-proxy"));
+// import * as http from 'http';
 const proxy = http_proxy_1.default.createProxyServer();
 const numCPUs = os_1.default.cpus().length;
 let lastWorkerIndex = 0;
@@ -29,10 +30,6 @@ if (process.env.NODE_ENV === 'multi') {
     }
     else {
         if (cluster_1.default.worker !== undefined) { // Check if cluster.worker is defined
-            // Determine the path to the appropriate .env file
-            //   const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.dev';
-            //   // Load the environment variables from the .env file
-            //   dotenv.config({ path: path.resolve(__dirname, '.', envFile) });
             // Determine the base port for the workers
             const BASE_PORT = 4001; // Start worker ports from 4000
             // Calculate the port for this worker
@@ -80,39 +77,17 @@ if (process.env.NODE_ENV === 'multi') {
         proxy.on('error', (err) => {
             console.error('Proxy Error:', err);
         });
-        // // Handle errors from the proxy server
-        // proxy.on('error', (err: Error, req: http.IncomingMessage, res: http.ServerResponse) => {
-        //     console.error('Proxy Error:', err);
-        //     // Send an error response to the client
-        //     res.status(500).send('Proxy Error');
-        // });
         loadBalancerApp.listen(4000, () => {
             console.log(`Load balancer is listening on PORT 4000`);
         });
     }
 }
 else {
-    // if (cluster.isPrimary) {
-    //   console.log(`Master process ${process.pid} is running`);
-    //   // Fork workers
-    //   for (let i = 0; i < numCPUs-1; i++) {
-    //     cluster.fork();
-    //   }
-    //   cluster.on('exit', (worker: Worker, code: number, signal: string) => {
-    //     console.log(`Worker process ${worker.process.pid} died. Restarting...`);
-    //     cluster.fork();
-    //   });
-    // } else {
-    //     if (cluster.worker !== undefined) { // Check if cluster.worker is defined
     // Determine the path to the appropriate .env file
     const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.dev';
     // Load the environment variables from the .env file
     dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '.', envFile) });
-    // // Determine the base port for the workers
-    // const BASE_PORT = process.env.PORT ? parseInt(process.env.PORT) : 4001; // Start worker ports from 4000
-    // // Calculate the port for this worker
-    // const PORT = BASE_PORT + cluster.worker.id - 1;
-    const PORT = process.env.PORT || 4001; // Default to 8000 if PORT is not set
+    const PORT = process.env.PORT || 4001; // Default to 4001 if PORT is not set
     const mongodb = process.env.MONGO_URI || 'mongodb://localhost:27017/project';
     if (!mongodb) {
         console.error("MONGO_URI is not defined in the environment variables.");
@@ -131,6 +106,4 @@ else {
     app.listen(PORT, () => {
         console.log(`Server Start on PORT http://localhost:${PORT}`);
     });
-    //     }
-    // }
 }

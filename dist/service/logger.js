@@ -10,10 +10,4 @@ const logger = (0, winston_1.createLogger)({
         // new winston.transports.File({ filename: './log/app.log' }) // Log all other logs to combined.log
     ]
 });
-// If we're not in production, log to the console as well
-// if (process.env.NODE_ENV !== 'production') {
-//     logger.add(new winston.transports.Console({
-//         format: winston.format.simple()
-//     }));
-// }
 exports.default = logger;
